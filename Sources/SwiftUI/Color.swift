@@ -25,8 +25,13 @@
  */
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
-@available(iOS 13.0, tvOS 13.0, watchOS 6.0, macOS 10.15, *)
+@available(iOS 14.0, tvOS 13.0, watchOS 6.0, macOS 11.0, *)
 public extension Color {
   // MARK: - Manipulating Hexa-decimal Values and Strings
 
@@ -74,4 +79,35 @@ public extension Color {
 
     self.init(red: red, green: green, blue: blue, opacity: opacity)
   }
+    
+    func toDynamicColor() -> DynamicColor {
+        let components = self.components
+        let color = DynamicColor(r: components.red * 255, g: components.green * 255, b: components.blue * 255, a: components.opacity * 255)
+        return color
+    }
+}
+
+@available(iOS 14.0, tvOS 13.0, watchOS 6.0, macOS 11.0, *)
+extension Color {
+    var components: (red: CGFloat, green: CGFloat, blue: CGFloat, opacity: CGFloat) {
+        #if canImport(UIKit)
+        typealias NativeColor = UIColor
+        #elseif canImport(AppKit)
+        typealias NativeColor = NSColor
+        #endif
+
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var o: CGFloat = 0
+        #if os(macOS)
+        guard let nativeColor = NativeColor(self).usingColorSpaceName(.calibratedRGB) else {
+            return (0, 0, 0, 0)
+        }
+        #elseif os(iOS)
+        let nativeColor = NativeColor(self)
+        #endif
+        nativeColor.getRed(&r, green: &g, blue: &b, alpha: &o)
+        return (r, g, b, o)
+    }
 }
